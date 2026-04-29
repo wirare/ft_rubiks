@@ -25,8 +25,8 @@ struct Move
 {
 	Move(Face face, Modifier modifier): face(face), modifier(modifier) {}
 	Move();
-	Face face;
-	Modifier modifier;
+	Face		face;
+	Modifier	modifier;
 
 	explicit operator std::string() const
 	{
@@ -86,16 +86,16 @@ struct Corner
 {
 	Corner(CornerPos pos, int orientation): pos(pos), orientation(orientation) {}
 	Corner();
-	CornerPos pos;
-	int orientation;
+	CornerPos	pos;
+	int			orientation;
 };
 
 struct Edge
 {
 	Edge(EdgePos pos, int orientation): pos(pos), orientation(orientation) {}
 	Edge();
-	EdgePos pos;
-	int orientation;
+	EdgePos		pos;
+	int			orientation;
 };
 
 class Rubiks
@@ -116,11 +116,24 @@ class Rubiks
 			}
 		}
 
-		void apply_move(const Move& move)
+		Rubiks(const Rubiks& other)
 		{
-			CornerRotDef CornerRotations = CornerRotDefTable[move.face];
-			EdgeRotDef EdgeRotations = EdgeRotDefTable[move.face];
-			std::array<int, 4> CornerTwistDeltas = CornerTwistDeltaTable[move.face];
+			Corners = other.Corners;
+			Edges = other.Edges;
+		}
+
+		Rubiks &operator=(const Rubiks& other)
+		{
+			Corners = other.Corners;
+			Edges = other.Edges;
+			return *this;
+		}
+
+		inline void apply_move(const Move& move)
+		{
+			CornerRotDef		CornerRotations		= CornerRotDefTable[move.face];
+			EdgeRotDef			EdgeRotations		= EdgeRotDefTable[move.face];
+			std::array<int, 4>	CornerTwistDeltas	= CornerTwistDeltaTable[move.face];
 
 			for (int j = 0; j != move.modifier; j++)
 			{
@@ -141,6 +154,12 @@ class Rubiks
 				Corners = CornersBuf;
 				Edges = EdgesBuf;
 			}
+		}
+
+		void apply_move_vector(const std::vector<Move> &moves)
+		{
+			for (const Move &move : moves)
+				apply_move(move);
 		}
 
 		bool is_solved()
@@ -165,14 +184,14 @@ class Rubiks
 		}
 
 	private:
-		using CornerRotDef = std::pair<std::array<CornerPos, 4>, std::array<CornerPos, 4>>;
-		using EdgeRotDef = std::pair<std::array<EdgePos, 4>, std::array<EdgePos, 4>>;
+		using CornerRotDef	= std::pair<std::array<CornerPos, 4>, std::array<CornerPos, 4>>;
+		using EdgeRotDef	= std::pair<std::array<EdgePos, 4>, std::array<EdgePos, 4>>;
 
-		std::array<Corner, 8> Corners;
-		std::array<Edge, 12> Edges;
+		std::array<Corner, 8>	Corners;
+		std::array<Edge, 12>	Edges;
 
-		std::array<Corner, 8> CornersBuf;
-		std::array<Edge, 12> EdgesBuf;
+		std::array<Corner, 8>	CornersBuf;
+		std::array<Edge, 12>	EdgesBuf;
 
 		const std::vector<CornerRotDef> CornerRotDefTable = {
 			{{ UFR, UFL, UBL, UBR }, { UFL, UBL, UBR, UFR }}, //U
