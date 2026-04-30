@@ -1,9 +1,12 @@
 #include <Rubiks.hpp>
+#include <IDDFS.hpp>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <Tables.hpp>
 
 #define CASE_FACE(x) case *#x: tmp.face = x; break
 std::vector<Move> parse_moves(const std::string& moves_str)
@@ -51,14 +54,37 @@ std::vector<Move> parse_moves(const std::string& moves_str)
 }
 #undef CASE_FACE
 
+#define COMPUTE_WRITE_TABLE(x)			\
+{										\
+	auto table = Tables::build_##x();	\
+	Tables::write_table("Tables/"#x".bin", table);		\
+}
+
 int main(int ac, char **av)
 {
-	(void)ac;
+	/*
+	if (ac < 3)
+		return 1;
 	std::vector<Move> moves = parse_moves(std::string(av[1]));
+	Rubiks cube;
+	cube.apply_move_vector(moves);
+	std::size_t depth = std::atoi(av[2]);
 
-	for (Move &move : moves)
+	auto result = Start_IDDFS(cube);
+	if (result.first == true)
 	{
-		std::cout << static_cast<std::string>(move) << " ";
+		for (Move &move : result.second)
+			std::cout << static_cast<std::string>(move) << " ";
+		std::cout << std::endl;
 	}
-	std::cout << std::endl;
+	else
+		std::cout << "No solution found for this cube in a depth of " << depth << std::endl;
+	*/
+	(void)ac;
+	(void)av;
+	COMPUTE_WRITE_TABLE(corners_orientations_move_table);
+	COMPUTE_WRITE_TABLE(edges_orientations_move_table);
+	COMPUTE_WRITE_TABLE(phase1_slice_move_table);
+	COMPUTE_WRITE_TABLE(twist_slice_pruning_table);
+	COMPUTE_WRITE_TABLE(flip_slice_pruning_table);
 }

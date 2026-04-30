@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <string>
 #include <utility>
 #include <vector>
@@ -24,7 +26,7 @@ using Modifier = enum {
 struct Move
 {
 	Move(Face face, Modifier modifier): face(face), modifier(modifier) {}
-	Move();
+	Move(): face(U), modifier(NONE) {}
 	Face		face;
 	Modifier	modifier;
 
@@ -85,7 +87,7 @@ using EdgePos = enum
 struct Corner
 {
 	Corner(CornerPos pos, int orientation): pos(pos), orientation(orientation) {}
-	Corner();
+	Corner(): pos(UFR), orientation(0) {}
 	CornerPos	pos;
 	int			orientation;
 };
@@ -93,7 +95,7 @@ struct Corner
 struct Edge
 {
 	Edge(EdgePos pos, int orientation): pos(pos), orientation(orientation) {}
-	Edge();
+	Edge(): pos(UR), orientation(0) {}
 	EdgePos		pos;
 	int			orientation;
 };
@@ -162,7 +164,7 @@ class Rubiks
 				apply_move(move);
 		}
 
-		bool is_solved()
+		bool is_solved() const
 		{
 			for (int i = 0; i != 8; i++)
 			{
@@ -182,6 +184,52 @@ class Rubiks
 
 			return true;
 		}
+
+		void apply_edge_orientation(const std::array<int, 12> &orientations)
+		{
+			for (int i = 0; i != 12; i++)
+				Edges[i].orientation = orientations[i];
+		}
+
+		void apply_corner_orientation(const std::array<int, 8> &orientations)
+		{
+			for (int i = 0; i != 8; i++)
+				Corners[i].orientation = orientations[i];
+		}
+
+		void set_8_corners(const std::array<CornerPos, 8> &pos)
+		{
+			for (int i = 0; i != 8; i++)
+				Corners[i].pos = pos[i];
+		}
+
+		void set_4_edges(const std::array<int, 4> &pos)
+		{
+			std::vector<EdgePos> available_edges = {UR, UF, UL, UB, DR, DF, DL, DB};
+			std::vector<EdgePos> middle_slice_edges = {BL, BR, FL, FR};
+
+			for (int i = 0; i != 12; i++)
+			{
+				if (std::find(pos.begin(), pos.end(), i) != pos.end())
+				{
+					Edges[i].pos = middle_slice_edges.back();
+					middle_slice_edges.pop_back();
+				}
+				else
+				{
+					Edges[i].pos = available_edges.back();
+					available_edges.pop_back();
+				}
+			}
+		}
+
+		void set_8_edges(const std::array<int, 8> &pos)
+		{
+			
+		}
+
+		const std::array<Corner, 8> &get_corners() const { return Corners; }
+		const std::array<Edge, 12> &get_edges() const { return Edges; }
 
 	private:
 		using CornerRotDef	= std::pair<std::array<CornerPos, 4>, std::array<CornerPos, 4>>;

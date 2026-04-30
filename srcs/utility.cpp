@@ -1,9 +1,7 @@
+#include <Utility.hpp>
 #include <Rubiks.hpp>
-#include <cstddef>
-#include <vector>
-#include <optional>
 
-Move &get_move(int move_nb)
+const Move &get_move(int move_nb)
 {
 	static std::array<Move, 18> move_list;
 	static bool init = false;
@@ -21,15 +19,22 @@ Move &get_move(int move_nb)
 				counter++;
 			}
 		}
+		init = true;
 	}
 
 	return move_list[move_nb];
 }
 
-std::optional<std::vector<Move>> IDDFS_Search(const Rubiks &initial_state, std::size_t depth)
+const Move &get_move_restricted(int move_nb)
 {
-	std::vector<Move> Moves;
-	Rubiks current_state = initial_state;
+	static std::array<Move, 10> move_list = {
+		(Move){U, NONE}, {U, COUNTER}, {U, TWICE},
+		{D, NONE}, {D, COUNTER}, {D, TWICE},
+		{F, TWICE},
+		{B, TWICE},
+		{R, TWICE},
+		{L, TWICE}
+	};
 
-
+	return move_list[move_nb];
 }
