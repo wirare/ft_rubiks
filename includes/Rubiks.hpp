@@ -223,9 +223,20 @@ class Rubiks
 			}
 		}
 
-		void set_8_edges(const std::array<int, 8> &pos)
+		void set_8_edges(const std::array<EdgePos, 8> &pos)
 		{
-			
+			for (int i = 0; i != 8; i++)
+			{
+				Edges[i].pos = pos[i];
+			}
+		}
+
+		void set_4_edges_ordered(const std::array<EdgePos, 4> &pos)
+		{
+			for (int i = 0; i != 4; i++)
+			{
+				Edges[i + 8].pos = pos[i];
+			}
 		}
 
 		const std::array<Corner, 8> &get_corners() const { return Corners; }

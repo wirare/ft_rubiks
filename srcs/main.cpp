@@ -1,5 +1,6 @@
 #include <Rubiks.hpp>
-#include <IDDFS.hpp>
+#include <Algorithms.hpp>
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -62,24 +63,51 @@ std::vector<Move> parse_moves(const std::string& moves_str)
 
 int main(int ac, char **av)
 {
-	/*
-	if (ac < 3)
+	if (ac < 2)
 		return 1;
+	
+	static const auto [corner_slice_prune, edge_slice_prune] = Tables::load_pruning_table_phase2();
+	if (std::find(corner_slice_prune.begin(), corner_slice_prune.end(), 255) != corner_slice_prune.end())
+	{
+		std::cout << "Error in corner slice prune table\n";
+		return 1;
+	}
+	if (std::find(edge_slice_prune.begin(), edge_slice_prune.end(), 255) != edge_slice_prune.end())
+	{
+		std::cout << "Error in edge slice prune table\n";
+		return 1;
+	}
+
 	std::vector<Move> moves = parse_moves(std::string(av[1]));
 	Rubiks cube;
 	cube.apply_move_vector(moves);
-	std::size_t depth = std::atoi(av[2]);
 
-	auto result = Start_IDDFS(cube);
-	if (result.first == true)
+	auto phase1_result = Start_phase1_IDA_Star(cube);
+	if (phase1_result.first == false)
 	{
-		for (Move &move : result.second)
+		std::cout << "Couldnt solve phase1\n";
+		return 1;
+	}
+
+	cube.apply_move_vector(phase1_result.second);
+	auto phase2_result = Start_phase2_IDA_Star(cube);
+	if (phase2_result.first == false)
+	{
+		std::cout << "Couldnt solve phase2\n";
+		return 2;
+	}
+
+	cube.apply_move_vector(phase2_result.second);
+	if (cube.is_solved())
+	{
+		std::cout << "Cube solved in " << phase1_result.second.size() + phase2_result.second.size() << " moves\n";
+		for (Move &move : phase1_result.second)
+			std::cout << static_cast<std::string>(move) << " ";
+		for (Move &move : phase2_result.second)
 			std::cout << static_cast<std::string>(move) << " ";
 		std::cout << std::endl;
 	}
-	else
-		std::cout << "No solution found for this cube in a depth of " << depth << std::endl;
-	*/
+	/*
 	(void)ac;
 	(void)av;
 	COMPUTE_WRITE_TABLE(corners_orientations_move_table);
@@ -87,4 +115,5 @@ int main(int ac, char **av)
 	COMPUTE_WRITE_TABLE(phase1_slice_move_table);
 	COMPUTE_WRITE_TABLE(twist_slice_pruning_table);
 	COMPUTE_WRITE_TABLE(flip_slice_pruning_table);
+	*/
 }

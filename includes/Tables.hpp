@@ -23,7 +23,7 @@ namespace Tables
 
 	static inline auto build_corners_orientations_move_table()
 	{
-		std::array<std::array<int, 18>, 2187> corner_orientation_move_table;
+		std::vector<std::array<int, 18>> corner_orientation_move_table(2187);
 
 		for (int i = 0; i != 2187; i++)
 		{
@@ -44,7 +44,7 @@ namespace Tables
 
 	static inline auto build_edges_orientations_move_table()
 	{
-		std::array<std::array<int, 18>, 2048> edge_orientation_move_table;
+		std::vector<std::array<int, 18>> edge_orientation_move_table(2048);
 
 		for (int i = 0; i != 2048; i++)
 		{
@@ -65,7 +65,7 @@ namespace Tables
 
 	static inline auto build_phase1_slice_move_table()
 	{
-		std::array<std::array<int, 18>, 495> phase1_slice_move_table;
+		std::vector<std::array<int, 18>> phase1_slice_move_table(495);
 
 		for (int i = 0; i != 495; i++)
 		{
@@ -86,7 +86,7 @@ namespace Tables
 
 	static inline auto build_corners_permutation_move_table()
 	{
-		std::array<std::array<int, 10>, 40320> corners_permutation_move_table;
+		std::vector<std::array<int, 10>> corners_permutation_move_table(40320);
 
 		for (int i = 0; i != 40320; i++)
 		{
@@ -98,11 +98,53 @@ namespace Tables
 				Move move = get_move_restricted(m);
 				Rubiks moved_cube = cube;
 				moved_cube.apply_move(move);
-				corners_permutation_move_table[i][m] = compute_corner_perm_coordinate(cube);
+				corners_permutation_move_table[i][m] = compute_corner_perm_coordinate(moved_cube);
 			}
 		}
 
 		return corners_permutation_move_table;
+	}
+
+	static inline auto build_UD_edges_permutation_move_table()
+	{
+		std::vector<std::array<int, 10>> UD_edges_permutation_move_table(40320);
+
+		for (int i = 0; i != 40320; i++)
+		{
+			Rubiks cube;
+			cube.set_8_edges(unrank_UD_edge_perm_coordinate(i));
+
+			for (int m = 0; m != 10; m++)
+			{
+				Move move = get_move_restricted(m);
+				Rubiks moved_cube = cube;
+				moved_cube.apply_move(move);
+				UD_edges_permutation_move_table[i][m] = compute_UD_edge_perm_coordinate(moved_cube);
+			}
+		}
+
+		return UD_edges_permutation_move_table;
+	}
+
+	static inline auto build_phase2_slice_move_table()
+	{
+		std::vector<std::array<int, 10>> phase2_slice_move_table(24);
+		
+		for (int i = 0; i != 24; i++)
+		{
+			Rubiks cube;
+			cube.set_4_edges_ordered(unrank_UD_Slice_phase2(i));
+
+			for (int m = 0; m != 10; m++)
+			{
+				Move move = get_move_restricted(m);
+				Rubiks moved_cube = cube;
+				moved_cube.apply_move(move);
+				phase2_slice_move_table[i][m] = compute_UD_Slice_phase2_coordinate(moved_cube);
+			}
+		}
+
+		return phase2_slice_move_table;
 	}
 
 	static inline auto build_twist_slice_pruning_table()
@@ -110,10 +152,8 @@ namespace Tables
 		auto corner_orientation_move_table = build_corners_orientations_move_table();
 		auto phase1_slice_move_table = build_phase1_slice_move_table();
 
-		std::array<uint8_t, 2187 * 495> twist_slice_pruning_table;
+		std::vector<uint8_t> twist_slice_pruning_table(2187 * 495, 255);
 		std::queue<std::pair<int, int>> BFS_Queue;
-
-		twist_slice_pruning_table.fill(255);
 
 		BFS_Queue.push({0, 494});
 		twist_slice_pruning_table[494] = 0;
@@ -149,10 +189,8 @@ namespace Tables
 		auto edge_orientation_move_table = build_edges_orientations_move_table();
 		auto phase1_slice_move_table = build_phase1_slice_move_table();
 
-		std::array<uint8_t, 2048 * 495> flip_slice_pruning_table;
+		std::vector<uint8_t> flip_slice_pruning_table(2048 * 495, 255);
 		std::queue<std::pair<int, int>> BFS_Queue;
-
-		flip_slice_pruning_table.fill(255);
 
 		BFS_Queue.push({0, 494});
 		flip_slice_pruning_table[494] = 0;
@@ -183,6 +221,80 @@ namespace Tables
 		return flip_slice_pruning_table;
 	}
 
+	static inline auto build_corner_slice_pruning_table()
+	{
+		auto corners_permutation_move_table = build_corners_permutation_move_table();
+		auto phase2_slice_move_table = build_phase2_slice_move_table();
+
+		std::vector<uint8_t> corner_slice_pruning_table(40320 * 24, 255);
+		std::queue<std::pair<int, int>> BFS_Queue;
+
+		BFS_Queue.push({0, 0});
+		corner_slice_pruning_table[0] = 0;
+
+		while (!BFS_Queue.empty())
+		{
+			auto [corner_permutation, slice_permutation] = BFS_Queue.front();
+			BFS_Queue.pop();
+
+			int current_index = corner_permutation * 24 + slice_permutation;
+			uint8_t current_distance = corner_slice_pruning_table[current_index];
+
+			for (int move = 0; move != 10; move++)
+			{
+				int next_corner_permutation = corners_permutation_move_table[corner_permutation][move];
+				int next_slice_permutation = phase2_slice_move_table[slice_permutation][move];
+
+				int next_index = next_corner_permutation * 24 + next_slice_permutation;
+
+				if (corner_slice_pruning_table[next_index] == 255)
+				{
+					corner_slice_pruning_table[next_index] = current_distance + 1;
+					BFS_Queue.push({next_corner_permutation, next_slice_permutation});
+				}
+			}
+		}
+
+		return corner_slice_pruning_table;
+	}
+
+	static inline auto build_edge_slice_pruning_table()
+	{
+		auto UD_edges_permutation_move_table = build_UD_edges_permutation_move_table();
+		auto phase2_slice_move_table = build_phase2_slice_move_table();
+
+		std::vector<uint8_t> edge_slice_pruning_table(40320 * 24, 255);
+		std::queue<std::pair<int, int>> BFS_Queue;
+
+		BFS_Queue.push({0, 0});
+		edge_slice_pruning_table[0] = 0;
+
+		while (!BFS_Queue.empty())
+		{
+			auto [edge_permutation, slice_permutation] = BFS_Queue.front();
+			BFS_Queue.pop();
+
+			int current_index = edge_permutation * 24 + slice_permutation;
+			uint8_t current_distance = edge_slice_pruning_table[current_index];
+
+			for (int move = 0; move != 10; move++)
+			{
+				int next_edge_permutation = UD_edges_permutation_move_table[edge_permutation][move];
+				int next_slice_permutation = phase2_slice_move_table[slice_permutation][move];
+
+				int next_index = next_edge_permutation * 24 + next_slice_permutation;
+
+				if (edge_slice_pruning_table[next_index] == 255)
+				{
+					edge_slice_pruning_table[next_index] = current_distance + 1;
+					BFS_Queue.push({next_edge_permutation, next_slice_permutation});
+				}
+			}
+		}
+
+		return edge_slice_pruning_table;
+	}
+
 	static inline auto load_pruning_table_phase1()
 	{
 		return std::make_pair(build_twist_slice_pruning_table(), build_flip_slice_pruning_table());
@@ -191,5 +303,15 @@ namespace Tables
 	static inline auto load_move_table_phase1()
 	{
 		return std::make_pair(build_phase1_slice_move_table(), std::make_pair(build_corners_orientations_move_table(), build_edges_orientations_move_table()));
+	}
+
+	static inline auto load_pruning_table_phase2()
+	{
+		return std::make_pair(build_corner_slice_pruning_table(), build_edge_slice_pruning_table());
+	}
+
+	static inline auto load_move_table_phase2()
+	{
+		return std::make_pair(build_phase2_slice_move_table(), std::make_pair(build_corners_permutation_move_table(), build_UD_edges_permutation_move_table()));
 	}
 };
