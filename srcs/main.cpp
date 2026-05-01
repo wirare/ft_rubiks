@@ -1,7 +1,8 @@
 #include <Rubiks.hpp>
 #include <Algorithms.hpp>
-#include <algorithm>
 #include <cstdlib>
+#include <exception>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -55,28 +56,52 @@ std::vector<Move> parse_moves(const std::string& moves_str)
 }
 #undef CASE_FACE
 
-#define COMPUTE_WRITE_TABLE(x)			\
-{										\
-	auto table = Tables::build_##x();	\
-	Tables::write_table("Tables/"#x".bin", table);		\
+#define COMPUTE_WRITE_TABLE(x)								\
+{															\
+	auto table = Tables::build_##x();						\
+	Tables::write_vector_table("Tables/"#x".bin", table);	\
 }
 
 int main(int ac, char **av)
 {
 	if (ac < 2)
 		return 1;
-	
-	static const auto [corner_slice_prune, edge_slice_prune] = Tables::load_pruning_table_phase2();
-	if (std::find(corner_slice_prune.begin(), corner_slice_prune.end(), 255) != corner_slice_prune.end())
+
+	try
 	{
-		std::cout << "Error in corner slice prune table\n";
-		return 1;
+		Tables::load_all_tables();
 	}
-	if (std::find(edge_slice_prune.begin(), edge_slice_prune.end(), 255) != edge_slice_prune.end())
+	catch (const std::exception& load_e)
 	{
-		std::cout << "Error in edge slice prune table\n";
-		return 1;
+		std::cerr << "Could not load tables: " << load_e.what() << std::endl;
+		std::cerr << "Generating tables..." << std::endl;
+
+		try
+		{
+			std::filesystem::create_directories("Tables");
+
+			COMPUTE_WRITE_TABLE(corner_orientation_move_table);
+			COMPUTE_WRITE_TABLE(edge_orientation_move_table);
+			COMPUTE_WRITE_TABLE(phase1_slice_move_table);
+			COMPUTE_WRITE_TABLE(corner_permutation_move_table);
+			COMPUTE_WRITE_TABLE(UD_edge_permutation_move_table);
+			COMPUTE_WRITE_TABLE(phase2_slice_move_table);
+
+			COMPUTE_WRITE_TABLE(twist_slice_pruning_table);
+			COMPUTE_WRITE_TABLE(flip_slice_pruning_table);
+			COMPUTE_WRITE_TABLE(corner_slice_pruning_table);
+			COMPUTE_WRITE_TABLE(UD_edge_slice_pruning_table);
+
+			Tables::load_all_tables();
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "Error while generating/loading tables: "
+				<< e.what() << std::endl;
+			return 1;
+		}
 	}
+
 
 	std::vector<Move> moves = parse_moves(std::string(av[1]));
 	Rubiks cube;
