@@ -132,13 +132,4 @@ int main(int ac, char **av)
 			std::cout << static_cast<std::string>(move) << " ";
 		std::cout << std::endl;
 	}
-	/*
-	(void)ac;
-	(void)av;
-	COMPUTE_WRITE_TABLE(corners_orientations_move_table);
-	COMPUTE_WRITE_TABLE(edges_orientations_move_table);
-	COMPUTE_WRITE_TABLE(phase1_slice_move_table);
-	COMPUTE_WRITE_TABLE(twist_slice_pruning_table);
-	COMPUTE_WRITE_TABLE(flip_slice_pruning_table);
-	*/
 }

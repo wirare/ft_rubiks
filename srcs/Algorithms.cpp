@@ -75,7 +75,7 @@ static inline int phase1_heuristic(int corner_orientation, int edge_orientation,
 	return std::max(h1, h2);
 }
 
-#define MAX_PHASE1_DEPTH 20
+#define MAX_PHASE1_DEPTH 12
 
 std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_orientation, int slice, int depth, int bound, std::vector<Move> &Moves)
 {
@@ -196,7 +196,7 @@ std::pair<bool, int> phase2_IDA_Star_Search(int corner_permutation, int UD_edge_
 	return std::make_pair(false, min_next_bound);
 }
 
-#define MAX_PHASE2_DEPTH 20
+#define MAX_PHASE2_DEPTH 18
 std::pair<bool, std::vector<Move>> Start_phase2_IDA_Star(const Rubiks &phase1_cube)
 {
 	std::vector<Move> Moves;

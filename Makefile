@@ -1,6 +1,7 @@
 # Compiler and flags
 CXX := clang++
-CXXFLAGS := -std=c++23 -Wall -Werror -Wextra -O3 -g
+OPT_FLAGS := -O3 -march=native -mtune=native -funroll-loops -fvectorize -ffp-contract=fast  -freciprocal-math -ffast-math -fstrict-aliasing -flto=full -mprefer-vector-width=256 -fomit-frame-pointer
+CXXFLAGS := -std=c++23 -Wall -Werror -Wextra $(OPT_FLAGS)
 
 # Directories
 SRCDIR := srcs
@@ -20,7 +21,7 @@ all: $(TARGET)
 # Link object files into final binary
 $(TARGET): $(OBJFILES)
 	@echo "Linking $(TARGET)..."
-	$(CXX) $(OBJFILES) -o $(TARGET) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(OBJFILES) -o $(TARGET) $(LDFLAGS)
 
 # Compile .cpp to .o
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
