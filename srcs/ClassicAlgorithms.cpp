@@ -9,23 +9,6 @@
 #include <Tables.hpp>
 #include <Algorithms.hpp>
 
-inline Face opposite_face(Face face)
-{
-	if (face % 2 == 0)
-		return (Face)((int)face+1);
-	return (Face)((int)face-1);
-}
-
-inline bool should_search_with_move(const Move& next_move, const Move& prev_move)
-{
-	if (next_move.face == prev_move.face)
-		return false;
-
-	if (next_move.face == opposite_face(prev_move.face) && (int)prev_move.face > (int)next_move.face)
-		return false;
-	return true;
-}
-
 std::pair<bool, std::vector<Move>> IDDFS_Search(const Rubiks &initial_state, std::size_t current_depth, const std::size_t max_depth, std::vector<Move> &Moves)
 {
 	Rubiks current_state = initial_state;
@@ -69,8 +52,8 @@ std::pair<bool, std::vector<Move>> Start_IDDFS(const Rubiks &initial_state)
 
 static inline int phase1_heuristic(int corner_orientation, int edge_orientation, int slice)
 {
-	int h1 = Tables::twist_slice_pruning_table()[corner_orientation * 495 + slice];
-	int h2 = Tables::flip_slice_pruning_table()[edge_orientation * 495 + slice];
+	int h1 = ClassicTables::twist_slice_pruning_table()[corner_orientation * 495 + slice];
+	int h2 = ClassicTables::flip_slice_pruning_table()[edge_orientation * 495 + slice];
 
 	return std::max(h1, h2);
 }
@@ -95,9 +78,9 @@ std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_ori
 		if (Moves.size() >= 1 && !should_search_with_move(move, Moves.back()))
 			continue;
 
-		int next_corner_orientation = Tables::corner_orientation_move_table()[corner_orientation][i];
-		int next_edge_orientation = Tables::edge_orientation_move_table()[edge_orientation][i];
-		int next_slice = Tables::phase1_slice_move_table()[slice][i];
+		int next_corner_orientation = ClassicTables::corner_orientation_move_table()[corner_orientation][i];
+		int next_edge_orientation = ClassicTables::edge_orientation_move_table()[edge_orientation][i];
+		int next_slice = ClassicTables::phase1_slice_move_table()[slice][i];
 
 		Moves.push_back(move);
 
@@ -125,9 +108,9 @@ std::pair<bool, std::vector<Move>> Start_phase1_IDA_Star(const Rubiks &initial_s
 {
 	std::vector<Move> Moves;
 
-	int corner_orientation	= Ranks::compute_corner_orientation_coordinate(initial_state);
-	int edge_orientation	= Ranks::compute_edge_orientation_coordinate(initial_state);
-	int slice				= Ranks::compute_UD_Slice_phase1_coordinate(initial_state);
+	int corner_orientation	= ClassicRanks::compute_corner_orientation_coordinate(initial_state);
+	int edge_orientation	= ClassicRanks::compute_edge_orientation_coordinate(initial_state);
+	int slice				= ClassicRanks::compute_UD_Slice_phase1_coordinate(initial_state);
 
 	int bound = phase1_heuristic(corner_orientation, edge_orientation, slice);
 
@@ -146,8 +129,8 @@ std::pair<bool, std::vector<Move>> Start_phase1_IDA_Star(const Rubiks &initial_s
 
 static inline int phase2_heuristic(int corner_permutation, int UD_edge_permutation, int slice_permutation)
 {
-	int h1 = Tables::corner_slice_pruning_table()[corner_permutation * 24 + slice_permutation];
-	int h2 = Tables::UD_edge_slice_pruning_table()[UD_edge_permutation * 24 + slice_permutation];
+	int h1 = ClassicTables::corner_slice_pruning_table()[corner_permutation * 24 + slice_permutation];
+	int h2 = ClassicTables::UD_edge_slice_pruning_table()[UD_edge_permutation * 24 + slice_permutation];
 
 	return std::max(h1, h2);
 }
@@ -170,9 +153,9 @@ std::pair<bool, int> phase2_IDA_Star_Search(int corner_permutation, int UD_edge_
 		if (Moves.size() >= 1 && !should_search_with_move(move, Moves.back()))
 			continue;
 
-		int next_corner_permutation = Tables::corner_permutation_move_table()[corner_permutation][i];
-		int next_UD_edge_permutation = Tables::UD_edge_permutation_move_table()[UD_edge_permutation][i];
-		int next_slice_permutation = Tables::phase2_slice_move_table()[slice_permutation][i];
+		int next_corner_permutation = ClassicTables::corner_permutation_move_table()[corner_permutation][i];
+		int next_UD_edge_permutation = ClassicTables::UD_edge_permutation_move_table()[UD_edge_permutation][i];
+		int next_slice_permutation = ClassicTables::phase2_slice_move_table()[slice_permutation][i];
 
 		Moves.push_back(move);
 
@@ -201,9 +184,9 @@ std::pair<bool, std::vector<Move>> Start_phase2_IDA_Star(const Rubiks &phase1_cu
 {
 	std::vector<Move> Moves;
 
-	int corner_permutation	= Ranks::compute_corner_perm_coordinate(phase1_cube);
-	int UD_edge_permutation	= Ranks::compute_UD_edge_perm_coordinate(phase1_cube);
-	int slice_permutation	= Ranks::compute_UD_Slice_phase2_coordinate(phase1_cube);
+	int corner_permutation	= ClassicRanks::compute_corner_perm_coordinate(phase1_cube);
+	int UD_edge_permutation	= ClassicRanks::compute_UD_edge_perm_coordinate(phase1_cube);
+	int slice_permutation	= ClassicRanks::compute_UD_Slice_phase2_coordinate(phase1_cube);
 
 	int bound = phase2_heuristic(corner_permutation, UD_edge_permutation, slice_permutation);
 

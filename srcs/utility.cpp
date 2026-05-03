@@ -1,5 +1,7 @@
 #include <Utility.hpp>
 #include <Rubiks.hpp>
+#include <sstream>
+#include <stdexcept>
 
 const Move &get_move(int move_nb)
 {
@@ -28,7 +30,8 @@ const Move &get_move(int move_nb)
 const Move &get_move_restricted(int move_nb)
 {
 	static std::array<Move, 10> move_list = {
-		(Move){U, NONE}, {U, COUNTER}, {U, TWICE},
+		(Move)
+		{U, NONE}, {U, COUNTER}, {U, TWICE},
 		{D, NONE}, {D, COUNTER}, {D, TWICE},
 		{F, TWICE},
 		{B, TWICE},
@@ -38,3 +41,121 @@ const Move &get_move_restricted(int move_nb)
 
 	return move_list[move_nb];
 }
+
+const Move &get_skewb_move(int move_nb)
+{
+	static std::array<Move, 8> move_list {
+		(Move)
+		{U, NONE}, {U, TWICE},
+		{B, NONE}, {B, TWICE},
+		{R, NONE}, {R, TWICE},
+		{L, NONE}, {L, TWICE},
+	};
+
+	return move_list[move_nb];
+}
+
+Face opposite_face(Face face)
+{
+	if (face % 2 == 0)
+		return (Face)((int)face+1);
+	return (Face)((int)face-1);
+}
+
+bool should_search_with_move(const Move& next_move, const Move& prev_move)
+{
+	if (next_move.face == prev_move.face)
+		return false;
+
+	if (next_move.face == opposite_face(prev_move.face) && (int)prev_move.face > (int)next_move.face)
+		return false;
+	return true;
+}
+
+
+#define CASE_FACE(x) case *#x: tmp.face = x; break
+std::vector<Move> parse_moves_classic(const std::string& moves_str)
+{
+	std::vector<Move> moves;
+
+	std::string token;
+	std::stringstream ss(moves_str);
+	Move tmp;
+
+	while (std::getline(ss, token, ' '))
+	{
+		if (token.length() > 2)
+			throw std::invalid_argument("Error in the shuffle string: Move too big");
+
+		switch (token[0])
+		{
+			CASE_FACE(U);
+			CASE_FACE(D);
+			CASE_FACE(L);
+			CASE_FACE(R);
+			CASE_FACE(F);
+			CASE_FACE(B);
+			default:
+				throw std::invalid_argument("Error in the shuffle string: Wrong face");
+		}
+
+		if (token.length() == 2)
+		{
+			switch (token[1])
+			{
+				case '\'': tmp.modifier = COUNTER; break;
+				case '2': tmp.modifier = TWICE; break;
+				default:
+					throw std::invalid_argument("Error in the shuffle string: Wrong modifier");
+			}
+		}
+		else
+			tmp.modifier = NONE;
+
+		moves.push_back(tmp);
+	}
+
+	return moves;
+}
+
+std::vector<Move> parse_moves_skewb(const std::string& moves_str)
+{
+	std::vector<Move> moves;
+
+	std::string token;
+	std::stringstream ss(moves_str);
+	Move tmp;
+
+	while (std::getline(ss, token, ' '))
+	{
+		if (token.length() > 2)
+			throw std::invalid_argument("Error in the shuffle string: Move too big");
+
+		switch (token[0])
+		{
+			CASE_FACE(U);
+			CASE_FACE(L);
+			CASE_FACE(R);
+			CASE_FACE(B);
+			default:
+				throw std::invalid_argument("Error in the shuffle string: Wrong face");
+		}
+
+		if (token.length() == 2)
+		{
+			switch (token[1])
+			{
+				case '\'': tmp.modifier = TWICE; break;
+				default:
+					throw std::invalid_argument("Error in the shuffle string: Wrong modifier");
+			}
+		}
+		else
+			tmp.modifier = NONE;
+
+		moves.push_back(tmp);
+	}
+
+	return moves;
+}
+#undef CASE_FACE
