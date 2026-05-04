@@ -1,3 +1,4 @@
+#include "Skewb.hpp"
 #include <Rubiks.hpp>
 #include <Algorithms.hpp>
 #include <cstdlib>
@@ -129,8 +130,7 @@ int main(int ac, char **av)
 
 	std::vector<Move> moves = parse_moves_skewb(std::string(av[1]));
 	Skewb cube;
-	cube.apply_move_vector(moves);
-
+	cube.apply_move_vector(moves, false);
 	auto result = Start_skewb_IDA_Star(cube);
 	if (result.first == false)
 	{
@@ -146,6 +146,6 @@ int main(int ac, char **av)
 	}
 	std::cout << "Cube solved in " << result.second.size() << " moves\n";
 	for (Move &move : result.second)
-		std::cout << static_cast<std::string>(move) << " ";
+		std::cout << print_skewb_move(move) << " ";
 	std::cout << std::endl;
 }

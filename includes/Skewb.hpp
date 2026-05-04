@@ -1,7 +1,11 @@
 #pragma once
 
-#include <Rubiks.hpp>
+#include <iostream>
 #include <stdexcept>
+#include <string>
+#include <Common.hpp>
+#include <array>
+#include <vector>
 
 using CenterPos = enum
 {
@@ -19,6 +23,32 @@ struct Center
 	Center(): pos(CU) {}
 	CenterPos	pos;
 };
+
+#define CASE_FACE_CHAR(x) case x: result += #x; break
+static inline std::string print_skewb_move(const Move &move)
+{
+	std::string result;
+
+	switch (move.face)
+	{
+		CASE_FACE_CHAR(U);
+		CASE_FACE_CHAR(L);
+		CASE_FACE_CHAR(R);
+		CASE_FACE_CHAR(B);
+		default:
+			__builtin_unreachable();
+	}
+
+	switch (move.modifier)
+	{
+		case NONE: break;
+		case TWICE: result += "'"; break;
+		default:
+			__builtin_unreachable();
+	}
+
+	return result;
+}
 
 class Skewb
 {
@@ -119,10 +149,17 @@ class Skewb
 				throw std::runtime_error("Bad Skewb corner orientation invariant");
 		}
 
-		void apply_move_vector(const std::vector<Move> &moves)
+		void apply_move_vector(const std::vector<Move> &moves, bool print = false)
 		{
 			for (const Move &move : moves)
+			{
 				apply_move(move);
+				if (print)
+				{
+					print_corners_pos();
+					print_centers_pos();
+				}
+			}
 		}
 
 		void set_corner_orientation(const std::array<int, 8> &corners_orientations)
@@ -141,6 +178,47 @@ class Skewb
 		{
 			for (int i = 0; i != 8; i++)
 				Corners[i].pos = corners_pos[i];
+		}
+		
+		#define CASE_PIECE(x) case x: return std::string(#x)
+		std::string corners_pos_to_str(CornerPos pos) const
+		{
+			switch (pos)
+			{
+				CASE_PIECE(UBR);
+				CASE_PIECE(UFR);
+				CASE_PIECE(UFL);
+				CASE_PIECE(UBL);
+				CASE_PIECE(DBR);
+				CASE_PIECE(DFR);
+				CASE_PIECE(DFL);
+				CASE_PIECE(DBL);
+			}
+		}
+
+		std::string centers_pos_to_str(CenterPos pos) const
+		{
+			switch (pos)
+			{
+				CASE_PIECE(CU);
+				CASE_PIECE(CD);
+				CASE_PIECE(CF);
+				CASE_PIECE(CB);
+				CASE_PIECE(CL);
+				CASE_PIECE(CR);
+			}
+		}
+
+		void print_corners_pos() const
+		{
+			for (int i = 0; i != 8; i++)
+				std::cout << "Corner at pos " << corners_pos_to_str((CornerPos)i) << " is corner " << corners_pos_to_str(Corners[i].pos) << " with orientation " << Corners[i].orientation << std::endl;
+		}
+
+		void print_centers_pos() const 
+		{
+			for (int i = 0; i != 6; i++)
+				std::cout << "Center at pos " << centers_pos_to_str((CenterPos)i) << " is center " << centers_pos_to_str(Centers[i].pos) << std::endl;
 		}
 
 	private:
@@ -178,6 +256,6 @@ class Skewb
 			2, //U
 			1, //B
 			2, //R
-			2, //L
+			1, //L
 		};
 };
