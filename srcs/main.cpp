@@ -130,7 +130,7 @@ int main(int ac, char **av)
 
 	std::vector<Move> moves = parse_moves_skewb(std::string(av[1]));
 	Skewb cube;
-	cube.apply_move_vector(moves, false);
+	cube.apply_move_vector(moves);
 	auto result = Start_skewb_IDA_Star(cube);
 	if (result.first == false)
 	{

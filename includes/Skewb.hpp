@@ -134,19 +134,12 @@ class Skewb
 					CentersBuf[CenterRotations.second[i]] = Centers[CenterRotations.first[i]];
 				}
 
-				for (int i = 1; i != 4; i++)
+				for (int i = 0; i != 4; i++)
 					CornersBuf[AffectedCorners[i]].orientation = (CornersBuf[AffectedCorners[i]].orientation + CornerTwistDelta) % 3;
 
 				Corners = CornersBuf;
 				Centers = CentersBuf;
 			}
-
-			int sum = 0;
-			for (const Corner& c : Corners)
-				sum += c.orientation;
-
-			if (sum % 3 != 0)
-				throw std::runtime_error("Bad Skewb corner orientation invariant");
 		}
 
 		void apply_move_vector(const std::vector<Move> &moves, bool print = false)
@@ -235,7 +228,7 @@ class Skewb
 			{{ CU, CL, CB }, { CL, CB, CU }}, //U
 			{{ CB, CL, CD }, { CL, CD, CB }}, //B
 			{{ CR, CB, CD }, { CB, CD, CR }}, //R
-			{{ CF, CL, CD }, { CL, CD, CF }}, //L
+			{{ CF, CL, CD }, { CD, CF, CL }}, //L
 		};
 
 		const std::vector<CornerRotDef> CornerRotDefTable = {
@@ -256,6 +249,6 @@ class Skewb
 			2, //U
 			1, //B
 			2, //R
-			1, //L
+			2, //L
 		};
 };

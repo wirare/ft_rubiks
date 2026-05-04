@@ -270,7 +270,7 @@ namespace SkewbRanks
 	static inline int compute_corner_orientation_coordinate(const Skewb& cube)
 	{
 		int coordinate = 0;
-		for (int i = 0; i != 7; i++)
+		for (int i = 0; i != 8; i++)
 			coordinate += cube.get_corners()[i].orientation * std::pow(3, i);
 		return coordinate;
 	}
@@ -335,18 +335,15 @@ namespace SkewbRanks
 
 	static inline std::array<int, 8> unrank_corners_orientation(int rank)
 	{
-		int sum = 0;
 		std::array<int, 8> corners_orientation;
 
-		for (int i = 0; i != 7; i++)
+		for (int i = 0; i != 8; i++)
 		{
 			int res = rank % 3;
 			corners_orientation[i] = res;
-			sum += res;
 			rank /= 3;
 		}
 
-		corners_orientation[7] = (3 - (sum % 3)) % 3;
 		return corners_orientation;
 	}
 
