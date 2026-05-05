@@ -1,6 +1,11 @@
 #pragma once
 #include <string>
 
+using CubeType = enum {
+	CLASSIC,
+	SKEWB,
+};
+
 using Face = enum {
 	U,
 	D,

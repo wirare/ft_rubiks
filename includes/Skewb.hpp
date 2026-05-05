@@ -1,6 +1,10 @@
 #pragma once
 
+#include "Algorithms.hpp"
+#include "Puzzle.hpp"
+#include "Utility.hpp"
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <Common.hpp>
@@ -24,33 +28,9 @@ struct Center
 	CenterPos	pos;
 };
 
-#define CASE_FACE_CHAR(x) case x: result += #x; break
-static inline std::string print_skewb_move(const Move &move)
-{
-	std::string result;
 
-	switch (move.face)
-	{
-		CASE_FACE_CHAR(U);
-		CASE_FACE_CHAR(L);
-		CASE_FACE_CHAR(R);
-		CASE_FACE_CHAR(B);
-		default:
-			__builtin_unreachable();
-	}
 
-	switch (move.modifier)
-	{
-		case NONE: break;
-		case TWICE: result += "'"; break;
-		default:
-			__builtin_unreachable();
-	}
-
-	return result;
-}
-
-class Skewb
+class Skewb : public Puzzle
 {
 	public:
 		Skewb()
@@ -71,11 +51,23 @@ class Skewb
 			Centers = other.Centers;
 		}
 
+		~Skewb() {};
+
 		Skewb &operator=(const Skewb& other)
 		{
 			Corners = other.Corners;
 			Centers = other.Centers;
 			return *this;
+		}
+
+		void solve()
+		{
+			auto result = Start_skewb_IDA_Star(*this);
+			if (result.first == false)
+				throw std::runtime_error("Couldnt solve skewb\n");
+
+			std::cout << "Cube solved in " << result.second.size() << " moves\n";
+			print_move_vector(result.second);
 		}
 
 		const std::array<Corner, 8> &get_corners() const { return Corners; }
@@ -142,16 +134,18 @@ class Skewb
 			}
 		}
 
-		void apply_move_vector(const std::vector<Move> &moves, bool print = false)
+		void apply_move_vector(const std::vector<Move> &moves)
 		{
 			for (const Move &move : moves)
 			{
 				apply_move(move);
+				/*
 				if (print)
 				{
 					print_corners_pos();
 					print_centers_pos();
 				}
+				*/
 			}
 		}
 
@@ -214,9 +208,93 @@ class Skewb
 				std::cout << "Center at pos " << centers_pos_to_str((CenterPos)i) << " is center " << centers_pos_to_str(Centers[i].pos) << std::endl;
 		}
 
+		const Move& move_generator(int i) const { return get_skewb_move(i); }
+		std::size_t get_moveset_size() const { return moveset_size; }
+
+		#define CASE_FACE(x) case *#x: tmp.face = x; break
+		std::vector<Move> parse_moves(const std::string& moves_str) const
+		{
+			std::vector<Move> moves;
+
+			std::string token;
+			std::stringstream ss(moves_str);
+			Move tmp;
+
+			while (std::getline(ss, token, ' '))
+			{
+				if (token.length() > 2)
+					throw std::invalid_argument("Error in the shuffle string: Move too big");
+
+				switch (token[0])
+				{
+					CASE_FACE(U);
+					CASE_FACE(L);
+					CASE_FACE(R);
+					CASE_FACE(B);
+					default:
+						throw std::invalid_argument("Error in the shuffle string: Wrong face");
+				}
+
+				if (token.length() == 2)
+				{
+					switch (token[1])
+					{
+						case '\'': tmp.modifier = TWICE; break;
+						default:
+							throw std::invalid_argument("Error in the shuffle string: Wrong modifier");
+					}
+				}
+				else
+					tmp.modifier = NONE;
+
+				moves.push_back(tmp);
+			}
+
+			return moves;
+		}
+		#undef CASE_FACE
+
+		CubeType get_type() const { return SKEWB; }
+
+		#define CASE_FACE_CHAR(x) case x: result += #x; break
+		static inline std::string print_move(const Move &move)
+		{
+			std::string result;
+
+			switch (move.face)
+			{
+				CASE_FACE_CHAR(U);
+				CASE_FACE_CHAR(L);
+				CASE_FACE_CHAR(R);
+				CASE_FACE_CHAR(B);
+				default:
+				__builtin_unreachable();
+			}
+
+			switch (move.modifier)
+			{
+				case NONE: break;
+				case TWICE: result += "'"; break;
+				default:
+							__builtin_unreachable();
+			}
+
+			return result;
+		}
+		#undef CASE_FACE_CHAR
+
+		void print_move_vector(const std::vector<Move> &moves) const
+		{
+			for (const Move &move : moves)
+				std::cout << print_move(move) << " ";
+			std::cout << std::endl;
+		}
+
 	private:
 		using CenterRotDef	= std::pair<std::array<CenterPos, 3>, std::array<CenterPos, 3>>;
 		using CornerRotDef	= std::pair<std::array<CornerPos, 3>, std::array<CornerPos, 3>>;
+
+		const std::size_t moveset_size = 8;
 
 		std::array<Corner, 8> Corners;
 		std::array<Center, 6> Centers;

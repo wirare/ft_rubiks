@@ -1,11 +1,17 @@
 #pragma once
 
+#include "Algorithms.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <Common.hpp>
+#include <Puzzle.hpp>
+#include <Utility.hpp>
 
 using EdgePos = enum
 {
@@ -31,7 +37,7 @@ struct Edge
 	int			orientation;
 };
 
-class Rubiks
+class Rubiks : public Puzzle
 {
 	public:
 		Rubiks()
@@ -55,11 +61,32 @@ class Rubiks
 			Edges = other.Edges;
 		}
 
+		~Rubiks() {};
+
 		Rubiks &operator=(const Rubiks& other)
 		{
 			Corners = other.Corners;
 			Edges = other.Edges;
 			return *this;
+		}
+
+		void solve()
+		{
+			auto phase1_result = Start_phase1_IDA_Star(*this);
+			if (phase1_result.first == false)
+				throw std::runtime_error("Couldnt solve phase 1\n");
+
+			apply_move_vector(phase1_result.second);
+			auto phase2_result = Start_phase2_IDA_Star(*this);
+			if (phase2_result.first == false)
+				throw std::runtime_error("Couldnt solve phase 2\n");
+
+			std::cout << "Cube solved in " << phase1_result.second.size() + phase2_result.second.size() << " moves\n";
+			for (Move &move : phase1_result.second)
+				std::cout << static_cast<std::string>(move) << " ";
+			for (Move &move : phase2_result.second)
+				std::cout << static_cast<std::string>(move) << " ";
+			std::cout << std::endl;
 		}
 
 		inline void apply_move(const Move& move)
@@ -172,10 +199,71 @@ class Rubiks
 
 		const std::array<Corner, 8> &get_corners() const { return Corners; }
 		const std::array<Edge, 12> &get_edges() const { return Edges; }
+		std::size_t get_moveset_size() const { return moveset_size; }
+
+		const Move& move_generator(int i) const { return get_move(i); }
+
+		#define CASE_FACE(x) case *#x: tmp.face = x; break
+		std::vector<Move> parse_moves(const std::string& moves_str) const
+		{
+			std::vector<Move> moves;
+
+			std::string token;
+			std::stringstream ss(moves_str);
+			Move tmp;
+
+			while (std::getline(ss, token, ' '))
+			{
+				if (token.length() > 2)
+					throw std::invalid_argument("Error in the shuffle string: Move too big");
+
+				switch (token[0])
+				{
+					CASE_FACE(U);
+					CASE_FACE(D);
+					CASE_FACE(L);
+					CASE_FACE(R);
+					CASE_FACE(F);
+					CASE_FACE(B);
+					default:
+						throw std::invalid_argument("Error in the shuffle string: Wrong face");
+				}
+
+				if (token.length() == 2)
+				{
+					switch (token[1])
+					{
+						case '\'': tmp.modifier = COUNTER; break;
+						case '2': tmp.modifier = TWICE; break;
+						default:
+							throw std::invalid_argument("Error in the shuffle string: Wrong modifier");
+					}
+				}
+				else
+					tmp.modifier = NONE;
+
+				moves.push_back(tmp);
+			}
+
+			return moves;
+		}
+		#undef CASE_FACE
+
+		CubeType get_type() const { return CLASSIC; }
+
+		void print_move_vector(const std::vector<Move> &moves) const
+		{
+			for (const Move &move : moves)
+				std::cout << std::string(move) << " ";
+			std::cout << std::endl;
+		}
 
 	private:
 		using CornerRotDef	= std::pair<std::array<CornerPos, 4>, std::array<CornerPos, 4>>;
 		using EdgeRotDef	= std::pair<std::array<EdgePos, 4>, std::array<EdgePos, 4>>;
+
+		const int moveset_size = 18;
+		//const int reduce_moveset_size = 10;
 
 		std::array<Corner, 8>	Corners;
 		std::array<Edge, 12>	Edges;
