@@ -28,8 +28,6 @@ struct Center
 	CenterPos	pos;
 };
 
-
-
 class Skewb : public Puzzle
 {
 	public:

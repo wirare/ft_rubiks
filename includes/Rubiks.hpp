@@ -29,6 +29,42 @@ using EdgePos = enum
 	BL
 };
 
+inline constexpr std::array<std::array<Face, 2>, 12> EdgeToFace =
+{{
+	{{U, R}}, // UR
+	{{U, F}}, // UF
+	{{U, L}}, // UL
+	{{U, B}}, // UB
+
+	{{D, R}}, // DR
+	{{D, F}}, // DF
+	{{D, L}}, // DL
+	{{D, B}}, // DB
+
+	{{F, R}}, // FR
+	{{F, L}}, // FL
+	{{B, R}}, // BR
+	{{B, L}}  // BL
+}};
+
+inline constexpr std::array<std::array<int, 2>, 12> EdgeToFacelet =
+{{
+	{{5, 1}}, // UR: U5, R1
+	{{7, 1}}, // UF: U7, F1
+	{{3, 1}}, // UL: U3, L1
+	{{1, 1}}, // UB: U1, B1
+
+	{{5, 7}}, // DR: D5, R7
+	{{1, 7}}, // DF: D1, F7
+	{{3, 7}}, // DL: D3, L7
+	{{7, 7}}, // DB: D7, B7
+
+	{{5, 3}}, // FR: F5, R3
+	{{3, 5}}, // FL: F3, L5
+	{{3, 5}}, // BR: B3, R5
+	{{5, 3}}  // BL: B5, L3
+}};
+
 struct Edge
 {
 	Edge(EdgePos pos, int orientation): pos(pos), orientation(orientation) {}
