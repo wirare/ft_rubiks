@@ -432,7 +432,7 @@ namespace SkewbTables
 	}
 	static inline auto build_corner_orientation_move_table()
 	{
-		return build_generic_move_table<8, 6561, Skewb>(unrank_corners_orientation, &Skewb::set_corner_orientation, compute_corner_orientation_coordinate, get_skewb_move);
+		return build_generic_move_table<8, 2187, Skewb>(unrank_corners_orientation, &Skewb::set_corner_orientation, compute_corner_orientation_coordinate, get_skewb_move);
 	}
 
 	static inline auto build_center_permutation_move_table()
@@ -449,7 +449,7 @@ namespace SkewbTables
 	{
 		return	build_generic_pruning_table(build_corner_orientation_move_table,
 											build_center_permutation_move_table,
-											6561, 720, 8,
+											2187, 720, 8,
 											{0, 0});
 	}
 
@@ -457,7 +457,7 @@ namespace SkewbTables
 	{
 		return	build_generic_pruning_table(build_corner_orientation_move_table,
 											build_corner_permutation_move_table,
-											6561, 36, 8,
+											2187, 36, 8,
 											{0, 0});
 	}
 }
