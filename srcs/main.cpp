@@ -1,6 +1,8 @@
+#include "Common.hpp"
 #include "Skewb.hpp"
 #include <Rubiks.hpp>
 #include <Algorithms.hpp>
+#include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>

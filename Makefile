@@ -1,12 +1,9 @@
 # Compiler and flags
 CXX := clang++
-PKG_CONFIG := pkg-config
-
 OPT_FLAGS := -O3 -march=native -mtune=native -funroll-loops -fvectorize -ffp-contract=fast -freciprocal-math -ffast-math -fstrict-aliasing -flto=full -mprefer-vector-width=256 -fomit-frame-pointer
 
 CXXFLAGS := -std=c++23 -Wall -Werror -Wextra $(OPT_FLAGS)
-CPPFLAGS := -Iincludes $(shell $(PKG_CONFIG) --cflags raylib)
-LDLIBS := -L/usr/local/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lXrandr -lXi -lXcursor -lXinerama
+CPPFLAGS := -Iincludes
 
 # Directories
 SRCDIR := srcs
@@ -20,16 +17,12 @@ SRCFILES := $(wildcard $(SRCDIR)/*.cpp)
 OBJFILES := $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCFILES))
 
 # Default target
-all: check-raylib $(TARGET)
-
-# Check raylib availability
-check-raylib:
-	@$(PKG_CONFIG) --exists raylib || (echo "raylib not found. Install raylib and pkg-config."; exit 1)
+all: $(TARGET)
 
 # Link object files into final binary
 $(TARGET): $(OBJFILES)
 	@echo "Linking $(TARGET)..."
-	$(CXX) $(CXXFLAGS) $(OBJFILES) -o $(TARGET) $(LDLIBS)
+	$(CXX) $(CXXFLAGS) $(OBJFILES) -o $(TARGET)
 
 # Compile .cpp to .o
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
@@ -51,4 +44,4 @@ fclean: clean
 # Rebuild from scratch
 re: fclean all
 
-.PHONY: all clean fclean re check-raylib
+.PHONY: all clean fclean re
