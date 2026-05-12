@@ -258,6 +258,31 @@ class Rubiks : public Puzzle
 			std::cout << std::endl;
 		}
 
+		Rubiks inverse() const
+		{
+			Rubiks inv;
+
+			for (int i = 0; i != 8; i++)
+			{
+				CornerPos cubie = Corners[i].pos;
+
+				inv.Corners[cubie].pos = static_cast<CornerPos>(i);
+				inv.Corners[cubie].orientation = (3 - Corners[i].orientation) % 3;
+			}
+
+			for (int i = 0; i != 12; i++)
+			{
+				EdgePos cubie = Edges[i].pos;
+
+				inv.Edges[cubie].pos = static_cast<EdgePos>(i);
+				inv.Edges[cubie].orientation = (2 - Edges[i].orientation) % 2;
+			}
+
+			return inv;
+		}
+
+		friend Rubiks compose(const Rubiks &A, const Rubiks &B);
+
 	private:
 		using CornerRotDef	= std::pair<std::array<CornerPos, 4>, std::array<CornerPos, 4>>;
 		using EdgeRotDef	= std::pair<std::array<EdgePos, 4>, std::array<EdgePos, 4>>;
@@ -298,3 +323,22 @@ class Rubiks : public Puzzle
 			{2, 1, 2, 1}  //L
 		};
 };
+
+inline Rubiks compose(const Rubiks &A, const Rubiks &B)
+{
+	Rubiks C;
+
+	for (int i = 0; i != 8; i++)
+	{
+		C.Corners[i].pos = A.Corners[B.Corners[i].pos].pos;
+		C.Corners[i].orientation = (A.Corners[B.Corners[i].pos].orientation + B.Corners[i].orientation) % 3;
+	}
+	
+	for (int i = 0; i != 12; i++)
+	{
+		C.Edges[i].pos = A.Edges[B.Edges[i].pos].pos;
+		C.Edges[i].orientation = (A.Edges[B.Edges[i].pos].orientation + B.Edges[i].orientation) % 2;
+	}
+
+	return C;
+}

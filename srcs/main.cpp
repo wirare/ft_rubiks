@@ -103,6 +103,21 @@ int main(int ac, char **av)
 		puzzle = new Rubiks;
 	else if (std::string(av[1]) == "Skewb")
 		puzzle = new Skewb;
+	else if (std::string(av[1]) == "Test")
+	{
+		load_write_tables(CLASSIC);
+		Rubiks target;
+		Rubiks cube;
+
+		target.apply_move_vector({{U, TWICE}, {D, TWICE}, {L, TWICE}, {R, TWICE}, {F, TWICE}, {B, TWICE}});
+		auto shuffle = generate_shuffle([cube](int i) -> const Move& { return cube.move_generator(i); }, 18, 20);
+		cube.apply_move_vector(shuffle);
+
+		Rubiks relative = compose(target.inverse(), cube);
+		cube.print_move_vector(shuffle);
+		relative.solve();
+		return 1;
+	}
 	else
 	{
 		print_help();
