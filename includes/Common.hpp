@@ -27,6 +27,7 @@ using Modifier = enum {
 struct Move
 {
 	Move(Face face, Modifier modifier): face(face), modifier(modifier) {}
+	bool operator==(const Move &other) const = default;
 	Move(): face(U), modifier(NONE) {}
 	Face		face;
 	Modifier	modifier;

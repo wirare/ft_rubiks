@@ -89,6 +89,18 @@ class Rubiks : public Puzzle
 			std::cout << std::endl;
 		}
 
+		void solve_best()
+		{
+			auto result = Find_better_solution(*this);
+			if (result.first == false)
+				throw std::runtime_error("Couldnt solve cube\n");
+
+			std::cout << "Cube solved in " << result.second.size() << " moves\n";
+			for (Move &move : result.second)
+				std::cout << static_cast<std::string>(move) << " ";
+			std::cout << std::endl;
+		}
+
 		inline void apply_move(const Move& move)
 		{
 			CornerRotDef		CornerRotations		= CornerRotDefTable[move.face];

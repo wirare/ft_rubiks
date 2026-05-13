@@ -68,6 +68,11 @@ class Skewb : public Puzzle
 			print_move_vector(result.second);
 		}
 
+		void solve_best()
+		{
+			solve();
+		}
+
 		const std::array<Corner, 8> &get_corners() const { return Corners; }
 		const std::array<Center, 6> &get_centers() const { return Centers; }
 

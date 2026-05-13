@@ -162,7 +162,10 @@ int main(int ac, char **av)
 		puzzle->print_move_vector(shuffle);
 		puzzle->apply_move_vector(shuffle);
 		load_write_tables(puzzle->get_type());
-		puzzle->solve();
+		if (ac >= 5 && std::string(av[4]) == "-b")
+			puzzle->solve_best();
+		else
+			puzzle->solve();
 	}
 	catch (const std::exception& e)
 	{

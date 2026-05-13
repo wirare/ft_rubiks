@@ -60,7 +60,7 @@ static inline int phase1_heuristic(int corner_orientation, int edge_orientation,
 
 #define MAX_PHASE1_DEPTH 12
 
-std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_orientation, int slice, int depth, int bound, std::vector<Move> &Moves)
+std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_orientation, int slice, int depth, int bound, std::vector<Move> &Moves, std::vector<std::vector<Move>> &solution_list, bool collect_solutions)
 {
 	int h = phase1_heuristic(corner_orientation, edge_orientation, slice);
 
@@ -68,7 +68,15 @@ std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_ori
 		return std::make_pair(false, depth + h);
 
 	if (corner_orientation == 0 && edge_orientation == 0 && slice == 494)
+	{
+		if (collect_solutions)
+		{
+			solution_list.push_back(Moves);
+			return std::make_pair(false, INT_MAX);
+		}
+
 		return std::make_pair(true, 0);
+	}
 
 	int min_next_bound = INT_MAX;
 
@@ -90,10 +98,12 @@ std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_ori
 						next_slice,
 						depth + 1,
 						bound,
-						Moves
+						Moves,
+						solution_list,
+						collect_solutions
 						);
 
-		if (result.first == true)
+		if (!collect_solutions && result.first == true)
 			return result;
 
 		min_next_bound = std::min(min_next_bound, result.second);
@@ -107,6 +117,7 @@ std::pair<bool, int> phase1_IDA_Star_Search(int corner_orientation, int edge_ori
 std::pair<bool, std::vector<Move>> Start_phase1_IDA_Star(const Rubiks &initial_state)
 {
 	std::vector<Move> Moves;
+	std::vector<std::vector<Move>> unused;
 
 	int corner_orientation	= ClassicRanks::compute_corner_orientation_coordinate(initial_state);
 	int edge_orientation	= ClassicRanks::compute_edge_orientation_coordinate(initial_state);
@@ -116,7 +127,7 @@ std::pair<bool, std::vector<Move>> Start_phase1_IDA_Star(const Rubiks &initial_s
 
 	while (bound <= MAX_PHASE1_DEPTH)
 	{
-		auto result = phase1_IDA_Star_Search(corner_orientation, edge_orientation, slice, 0, bound, Moves);
+		auto result = phase1_IDA_Star_Search(corner_orientation, edge_orientation, slice, 0, bound, Moves, unused, false);
 
 		if (result.first == true)
 			return std::make_pair(true, Moves);
@@ -125,6 +136,20 @@ std::pair<bool, std::vector<Move>> Start_phase1_IDA_Star(const Rubiks &initial_s
 	}
 
 	return std::make_pair(false, Moves);
+}
+
+std::pair<bool, std::vector<std::vector<Move>>> Collect_phase1_IDA_Star(const Rubiks &initial_state, int max_depth = MAX_PHASE1_DEPTH)
+{
+	std::vector<Move> Moves;
+	std::vector<std::vector<Move>> solution_list;
+
+	int corner_orientation	= ClassicRanks::compute_corner_orientation_coordinate(initial_state);
+	int edge_orientation	= ClassicRanks::compute_edge_orientation_coordinate(initial_state);
+	int slice				= ClassicRanks::compute_UD_Slice_phase1_coordinate(initial_state);
+
+	phase1_IDA_Star_Search(corner_orientation, edge_orientation, slice, 0, max_depth, Moves, solution_list, true);
+
+	return std::make_pair(!solution_list.empty(), solution_list);
 }
 
 static inline int phase2_heuristic(int corner_permutation, int UD_edge_permutation, int slice_permutation)
@@ -179,8 +204,7 @@ std::pair<bool, int> phase2_IDA_Star_Search(int corner_permutation, int UD_edge_
 	return std::make_pair(false, min_next_bound);
 }
 
-#define MAX_PHASE2_DEPTH 18
-std::pair<bool, std::vector<Move>> Start_phase2_IDA_Star(const Rubiks &phase1_cube)
+std::pair<bool, std::vector<Move>> Start_phase2_IDA_Star(const Rubiks &phase1_cube, int max_phase2_depth)
 {
 	std::vector<Move> Moves;
 
@@ -190,7 +214,7 @@ std::pair<bool, std::vector<Move>> Start_phase2_IDA_Star(const Rubiks &phase1_cu
 
 	int bound = phase2_heuristic(corner_permutation, UD_edge_permutation, slice_permutation);
 
-	while (bound <= MAX_PHASE2_DEPTH)
+	while (bound <= max_phase2_depth)
 	{
 		auto result = phase2_IDA_Star_Search(corner_permutation, UD_edge_permutation, slice_permutation, 0, bound, Moves);
 
@@ -201,4 +225,48 @@ std::pair<bool, std::vector<Move>> Start_phase2_IDA_Star(const Rubiks &phase1_cu
 	}
 
 	return std::make_pair(false, Moves);
+}
+
+std::pair<bool, std::vector<Move>> Find_better_solution(const Rubiks &initial_state)
+{
+	std::vector<Move> Moves;
+	auto phase1_candidates = Collect_phase1_IDA_Star(initial_state);
+	std::size_t best_length = INT_MAX;
+	std::vector<Move> best_phase1;
+	std::vector<Move> best_phase2;
+	
+	if (!phase1_candidates.first)
+		return std::make_pair(false, Moves);
+
+	for (const auto &phase1_path : phase1_candidates.second)
+	{
+		Rubiks phase1_cube = initial_state;
+		phase1_cube.apply_move_vector(phase1_path);
+
+		int max_phase2_depth = best_length - phase1_path.size() - 1;
+
+		if (max_phase2_depth < 0)
+			continue;
+
+		std::pair<bool, std::vector<Move>> phase2_result = Start_phase2_IDA_Star(phase1_cube, max_phase2_depth);
+
+		if (phase2_result.first)
+		{
+			std::size_t total = phase1_path.size() + phase2_result.second.size();
+
+			if (total < best_length)
+			{
+				best_length = total;
+				best_phase1 = phase1_path;
+				best_phase2 = phase2_result.second;
+			}
+		}
+	}
+
+	if (best_phase2.size() == 0)
+		return std::make_pair(false, Moves);
+
+	Moves = best_phase1;
+	Moves.insert(Moves.end(), best_phase2.begin(), best_phase2.end());
+	return std::make_pair(true, Moves);
 }
