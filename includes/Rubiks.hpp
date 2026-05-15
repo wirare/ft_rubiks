@@ -263,10 +263,13 @@ class Rubiks : public Puzzle
 
 		CubeType get_type() const { return CLASSIC; }
 
-		void print_move_vector(const std::vector<Move> &moves) const
+		void print_move_vector(std::vector<Move> &moves) const
 		{
-			for (const Move &move : moves)
+			for (Move &move : moves)
+			{
+				move.set_readable(readable);
 				std::cout << std::string(move) << " ";
+			}
 			std::cout << std::endl;
 		}
 
@@ -294,6 +297,8 @@ class Rubiks : public Puzzle
 		}
 
 		friend Rubiks compose(const Rubiks &A, const Rubiks &B);
+
+		void set_readable() { readable = true; }
 
 	private:
 		using CornerRotDef	= std::pair<std::array<CornerPos, 4>, std::array<CornerPos, 4>>;
@@ -334,6 +339,8 @@ class Rubiks : public Puzzle
 			{1, 2, 1, 2}, //R
 			{2, 1, 2, 1}  //L
 		};
+
+		bool readable = false;
 };
 
 inline Rubiks compose(const Rubiks &A, const Rubiks &B)

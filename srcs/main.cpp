@@ -149,6 +149,8 @@ int main(int ac, char **av)
 		};
 	}
 
+	if (settings.human_instinctive_print == true)
+		puzzle->set_readable();
 
 	try 
 	{

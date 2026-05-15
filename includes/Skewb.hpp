@@ -286,12 +286,17 @@ class Skewb : public Puzzle
 		}
 		#undef CASE_FACE_CHAR
 
-		void print_move_vector(const std::vector<Move> &moves) const
+		void print_move_vector(std::vector<Move> &moves) const
 		{
-			for (const Move &move : moves)
+			for (Move &move : moves)
+			{
+				move.set_readable(readable);
 				std::cout << print_move(move) << " ";
+			}
 			std::cout << std::endl;
 		}
+		
+		void set_readable() { readable = true; }
 
 	private:
 		using CenterRotDef	= std::pair<std::array<CenterPos, 3>, std::array<CenterPos, 3>>;
@@ -332,4 +337,6 @@ class Skewb : public Puzzle
 			2, //R
 			2, //L
 		};
+
+		bool readable = true;
 };

@@ -47,6 +47,15 @@ struct Settings
 			else if (current == "-b")
 				use_better_move_alg = true;
 
+			else if (current == "--readable")
+				human_instinctive_print = true;
+
+			else if (current == "--lang-fr")
+				language_g = LANG_FR;
+			
+			else if (current == "--lang-en")
+				language_g = LANG_EN;
+
 			else
 				user_shuffle = current;
 		}
@@ -57,7 +66,9 @@ struct Settings
 	std::size_t	shuffle_size = 20;
 	std::string	user_shuffle = "";
 	bool		use_better_move_alg = false;
+	bool		human_instinctive_print = false;
 
 	private:
 		std::stack<std::string>	args;
 };
+
