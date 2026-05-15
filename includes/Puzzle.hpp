@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <Common.hpp>
+#include <Settings.hpp>
 
 struct Move;
 

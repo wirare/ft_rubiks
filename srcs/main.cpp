@@ -91,18 +91,24 @@ void print_help()
 
 int main(int ac, char **av)
 {
-	if (ac < 3)
+	Settings settings;	
+	try
 	{
+		settings = Settings(ac, av);
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Error during args parsing: " << e.what() << std::endl;
 		print_help();
-		return 1;
 	}
 
 	Puzzle *puzzle;
 
-	if (std::string(av[1]) == "Classic")
+	if (settings.type == CLASSIC)
 		puzzle = new Rubiks;
-	else if (std::string(av[1]) == "Skewb")
+	else
 		puzzle = new Skewb;
+	/*
 	else if (std::string(av[1]) == "Test")
 	{
 		load_write_tables(CLASSIC);
@@ -123,29 +129,16 @@ int main(int ac, char **av)
 		print_help();
 		return 1;
 	}
+	*/
 
 	std::vector<Move> shuffle;
-	if (std::string(av[2]) == "--random-shuffle" || std::string(av[2]) == "-rs")
-	{
-		int n = 20;
-
-		if (ac >= 4)
-			n = std::atoi(av[3]);
-
-		if (n <= 0)
-		{
-			print_help();
-			delete puzzle;
-			return 1;
-		}
-
-		shuffle = generate_shuffle([puzzle](int i) -> const Move& { return puzzle->move_generator(i); }, puzzle->get_moveset_size(), n);
-	}
+	if (settings.is_random_shuffle == true)
+		shuffle = generate_shuffle([puzzle](int i) -> const Move& { return puzzle->move_generator(i); }, puzzle->get_moveset_size(), settings.shuffle_size);
 	else
 	{
 		try
 		{
-			shuffle = puzzle->parse_moves(std::string(av[2]));
+			shuffle = puzzle->parse_moves(settings.user_shuffle);
 		}
 		catch (const std::exception& e)
 		{
@@ -162,7 +155,7 @@ int main(int ac, char **av)
 		puzzle->print_move_vector(shuffle);
 		puzzle->apply_move_vector(shuffle);
 		load_write_tables(puzzle->get_type());
-		if (ac >= 5 && std::string(av[4]) == "-b")
+		if (settings.use_better_move_alg)
 			puzzle->solve_best();
 		else
 			puzzle->solve();
